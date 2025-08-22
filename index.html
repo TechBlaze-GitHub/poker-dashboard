@@ -1,125 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Poker Night Dashboard</title>
-<style>
-  body { font-family: Arial; background-color: #0b3d91; color: #fff; text-align: center; padding: 20px; }
-  h1 { margin-bottom: 10px; }
-  #live-number {
-    font-size: 72px;
-    font-weight: bold;
-    margin: 20px 0;
-    transition: transform 0.2s, color 0.2s;
-    display: inline-block;
-  }
-  #change-indicator {
-    font-size: 48px;
-    margin-left: 10px;
-    vertical-align: middle;
-    transition: opacity 0.5s;
-    opacity: 0;
-  }
-  .flash {
-    color: #ff9800;
-    transform: scale(1.3);
-  }
-  table { margin: 20px auto; border-collapse: collapse; width: 50%; }
-  th, td { border: 1px solid #fff; padding: 10px; }
-  th { background-color: #062f6c; }
-</style>
+  <meta charset="UTF-8">
+  <title>Poker Night Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1a1a1a;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 { margin-bottom: 20px; }
+    #liveNumber {
+      font-size: 64px;
+      font-weight: bold;
+      margin: 30px 0;
+      color: #00ff88;
+    }
+    img {
+      margin-top: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,255,136,0.5);
+    }
+  </style>
 </head>
 <body>
+  <h1>Poker Night Dashboard</h1>
+  
+  <div id="liveNumber">Loading...</div>
 
-<h1>Poker Night Dashboard</h1>
-
-<div>
-  <h2>Prize Pool</h2>
-  <div>
-    <span id="live-number">0</span>
-    <span id="change-indicator"></span>
-  </div>
-</div>
-
-<div>
-  <h2>Chip Values</h2>
-  <table>
-    <tr><th>Chip</th><th>Value</th></tr>
-    <tr><td>White</td><td>$1</td></tr>
-    <tr><td>Red</td><td>$5</td></tr>
-    <tr><td>Green</td><td>$25</td></tr>
-    <tr><td>Black</td><td>$100</td></tr>
-  </table>
-</div>
-
-<div>
   <h2>Poker Hand Rankings</h2>
-  <table>
-    <tr><th>Hand</th><th>Example</th></tr>
-    <tr><td>Royal Flush</td><td>A♠ K♠ Q♠ J♠ 10♠</td></tr>
-    <tr><td>Straight Flush</td><td>9♣ 8♣ 7♣ 6♣ 5♣</td></tr>
-    <tr><td>Four of a Kind</td><td>K♣ K♦ K♥ K♠ 5♣</td></tr>
-    <tr><td>Full House</td><td>Q♣ Q♦ Q♥ 8♠ 8♣</td></tr>
-    <tr><td>Flush</td><td>2♣ 6♣ 9♣ J♣ K♣</td></tr>
-    <tr><td>Straight</td><td>5♠ 6♦ 7♣ 8♠ 9♥</td></tr>
-    <tr><td>Three of a Kind</td><td>7♣ 7♦ 7♠ 2♠ 4♣</td></tr>
-    <tr><td>Two Pair</td><td>J♣ J♦ 4♣ 4♠ 9♥</td></tr>
-    <tr><td>One Pair</td><td>10♠ 10♥ 3♣ 6♦ K♠</td></tr>
-    <tr><td>High Card</td><td>A♦ J♣ 8♠ 6♣ 3♠</td></tr>
-  </table>
-</div>
+  <img src="https://i.imgur.com/bXW3JtX.png" alt="Poker Hand Rankings" width="500">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js"></script>
-<script>
-  const publicSheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSHnwMY9_-MphAllzlCL1U87IImxlSPgcs1sJpeZ7yQLzwzlfnGu71oaef3j1V2WoQ9L5sJ5sX8ZlC8/pubhtml";
-  let currentNumber = 0;
+  <script>
+    async function fetchNumber() {
+      const response = await fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vSHnwMY9_-MphAllzlCL1U87IImxlSPgcs1sJpeZ7yQLzwzlfnGu71oaef3j1V2WoQ9L5sJ5sX8ZlC8/pub?output=csv");
+      const data = await response.text();
+      const rows = data.split("\n").map(r => r.split(","));
 
-  function flashNumber() {
-    const elem = document.getElementById('live-number');
-    elem.classList.add('flash');
-    setTimeout(() => elem.classList.remove('flash'), 300);
-  }
+      // Grab D1 (row 0, column 3 since it's 0-based indexing)
+      const liveValue = rows[0][3];  
 
-  function showChangeIndicator(change) {
-    const indicator = document.getElementById('change-indicator');
-    if (change > 0) {
-      indicator.textContent = '🔺';
-      indicator.style.color = '#00ff00';
-    } else if (change < 0) {
-      indicator.textContent = '🔻';
-      indicator.style.color = '#ff0000';
-    } else {
-      indicator.textContent = '';
+      document.getElementById("liveNumber").textContent = liveValue || "—";
     }
-    indicator.style.opacity = 1;
-    setTimeout(() => { indicator.style.opacity = 0; }, 1000);
-  }
 
-  function updateLiveNumber(data) {
-    const number = parseInt(data['Number'] || data['number'] || data['A1'] || 0);
-    const change = number - currentNumber;
-    if (change !== 0) {
-      currentNumber = number;
-      document.getElementById('live-number').textContent = number;
-      flashNumber();
-      showChangeIndicator(change);
-    }
-  }
-
-  Tabletop.init({
-    key: publicSheetURL,
-    simpleSheet: true,
-    callback: function(data, tabletop) {
-      updateLiveNumber(data[0]);
-      setInterval(() => {
-        tabletop.sheets("Sheet1").fetch(update => updateLiveNumber(update[0]));
-      }, 5000);
-    }
-  });
-</script>
-
+    fetchNumber();
+    setInterval(fetchNumber, 5000); // refresh every 5s
+  </script>
 </body>
 </html>
-
-
